@@ -1,5 +1,7 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
+const { ENABLE_CORS, CORS_ORIGINS } = process.env;
 import multer from 'multer';
 
 import { sendResponse, sendErrorResponse } from './util/Response.js';
@@ -11,6 +13,28 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 const chat = new Chat();
+
+if(ENABLE_CORS) {
+    // Use the CORS middleware
+    let corsOptions = {};
+    if(CORS_ORIGINS) {
+
+        const allowedOrigins = CORS_ORIGINS.split(',');
+
+        corsOptions = {
+            origin: function (origin, callback) {
+                if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            },
+            optionsSuccessStatus: 200
+        };
+
+        app.use(cors(corsOptions));
+    }
+}
 
 // Middleware to parse JSON bodies
 app.use(express.json());

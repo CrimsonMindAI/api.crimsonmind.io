@@ -69,6 +69,17 @@ Here is an example of how to include the API key in your request headers using c
   curl -X GET "http://localhost:3000/" -H "x-api-key: your_api_key"
 ```
 
+### CORS Configuration
+This API supports Cross-Origin Resource Sharing (CORS). You can enable and configure CORS by setting the following environment variables in your `.env` file:
+- `ENABLE_CORS:` Set to `true` to enable CORS.
+- `CORS_ORIGIN:` A comma-separated list of allowed origins.
+
+Example `.env` configuration:
+```plaintext
+ENABLE_CORS=true
+CORS_ORIGINS=http://example.com,http://anotherdomain.com
+```
+
 ### Routes
 
 - **GET /**: Returns a welcome message.
