@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { isImage, convertImageB64 } from "../util/File.js";
+import fetch from 'node-fetch';
 
 const { OPENAI_API_KEY } = process.env;
 
@@ -10,30 +11,9 @@ export class Chat {
         this.Oai = new OpenAI(OPENAI_API_KEY);
     }
 
-    simpleAsk = async (statement = 'Say hello') => {
-        const { reply } = this;
+    describe = async (imageBuffer, statement = 'Describe the image') => {
+        Chat.model = 'gpt-4o';
 
-        const messages = [
-            {
-                role: 'user',
-                content: [
-                    {
-                        type: 'text',
-                        text: statement
-                    }
-                ]
-            }
-      ]
-
-        try {
-            return await reply(messages);
-        } catch (error) {
-            console.error('Error in simpleAsk:', error);
-            throw error;
-        }
-    }
-
-    describeImage = async (imageBuffer, statement = 'Describe the image') => {
         try {
             if(!imageBuffer) {
                 throw new Error('Image path is required');
@@ -43,7 +23,7 @@ export class Chat {
             }
 
             const base64 = await convertImageB64(imageBuffer);
-            const messages = [
+            const prompt = [
                 {
                     role: 'user',
                     content: [
@@ -60,24 +40,45 @@ export class Chat {
                     ]
                 }
             ];
-            return await this.reply(messages);
+            return await this.reply(prompt);
         } catch (error) {
             console.error('Error in describeImage:', error);
             throw error;
         }
     }
 
-    reply = async (messages = []) => {
+    generate = async (prompt) => {
+        Chat.model = 'dall-e';
+        return await this.reply(prompt);
+    }
+
+    reply = async (prompt = []) => {
         const { Oai } = this;
         const { model } = Chat;
 
         try {
-            const response = await Oai.chat.completions.create({
-                model,
-                messages,
-            });
-            const { choices } = response;
-            return choices[0].message;
+            let response;
+            switch(model) {
+                case 'dall-e':
+                    response = await this.Oai.images.generate({
+                        prompt
+                    });
+
+                    const imageUrl = response.data[0].url;
+                    const imageResponse = await fetch(imageUrl);
+                    const imageBuffer = await imageResponse.arrayBuffer();
+                    const base64Image = Buffer.from(imageBuffer).toString('base64');
+
+                    return { "message" : base64Image };
+                default:
+                    response = await Oai.chat.completions.create({
+                        model,
+                        messages:prompt,
+                    });
+                    const { choices } = response;
+                    return choices[0].message;
+            }
+
         } catch (error) {
             console.error('Error in reply:', error);
             throw error;
