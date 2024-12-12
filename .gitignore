@@ -62,3 +62,5 @@ typings/
 
 # GitHub Actions
 .github/
+
+files/

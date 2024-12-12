@@ -47,11 +47,7 @@ const upload = multer({ storage });
 
 app.use(authenticateApiKey);
 
-app.get('/', (req, res) => {
-    sendResponse(res, 200, { message: 'I see you!' });
-});
-
-app.post('/image/describe', upload.single('file'), async(req, res) => {
+app.post('/describe', upload.single('file'), async(req, res) => {
     let { statement } = req.body || {};
     const { file } = req;
 
@@ -61,18 +57,23 @@ app.post('/image/describe', upload.single('file'), async(req, res) => {
 
     try {
         const message =
-            await chat.describeImage(file.buffer, statement);
+            await chat.describe(file.buffer, statement);
         sendResponse(res, 200, { message });
     } catch (error) {
         sendErrorResponse(res, 500, 'Internal Server Error');
     }
 });
 
-app.post('/statement', async (req, res) => {
-    let { statement } = req.body || {};
+app.post('/generate', async(req, res) => {
+    let { prompt } = req.body || {};
+
+    if (!prompt) {
+        return sendErrorResponse(res, 400, 'Prompt is required');
+    }
 
     try {
-        const message = await chat.simpleAsk(statement);
+        const message =
+            await chat.generate(prompt);
         sendResponse(res, 200, { message });
     } catch (error) {
         sendErrorResponse(res, 500, 'Internal Server Error');
